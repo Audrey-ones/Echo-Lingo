@@ -55,7 +55,12 @@ export const useLessonStore = create<LessonState>((set, get) => ({
 
   setAudioBlobUrl: (url) => set({ audioBlobUrl: url }),
 
-  setCurrentIndex: (index) => set({ currentIndex: index }),
+  setCurrentIndex: (index) => {
+    const { lesson } = get();
+    if (lesson && index >= 0 && index < lesson.sentences.length) {
+      set({ currentIndex: index });
+    }
+  },
 
   nextSentence: () => {
     const { currentIndex, lesson } = get();

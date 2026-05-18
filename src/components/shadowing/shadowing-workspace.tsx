@@ -38,7 +38,9 @@ export function ShadowingWorkspace() {
   const [playingRecordingId, setPlayingRecordingId] = useState<string | null>(null);
   const [recordingsVersion, setRecordingsVersion] = useState(0);
   const [isDark, setIsDark] = useState(true);
+  const [micError, setMicError] = useState<string | null>(null);
   const recordingsMapRef = useRef<Map<string, Recording[]>>(new Map());
+  const recordingSentenceIdRef = useRef<string | null>(null);
   const waveSurfersRef = useRef<Map<string, WaveSurfer>>(new Map());
   const waveformElsRef = useRef<Map<string, HTMLDivElement>>(new Map());
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -56,6 +58,7 @@ export function ShadowingWorkspace() {
   useEffect(() => {
     setEditingText(false);
     setEditingZh(false);
+    setMicError(null);
   }, [sentence?.id]);
 
   // Sync theme state with DOM
@@ -185,6 +188,7 @@ export function ShadowingWorkspace() {
 
   const startRecording = useCallback(async () => {
     try {
+      setMicError(null);
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream, {
         mimeType: MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
@@ -193,12 +197,15 @@ export function ShadowingWorkspace() {
       });
       mediaRecorderRef.current = recorder;
       chunksRef.current = [];
+      recordingSentenceIdRef.current = sentence?.id ?? null;
 
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data);
       };
 
       recorder.onstop = () => {
+        const recordingSid = recordingSentenceIdRef.current;
+        recordingSentenceIdRef.current = null;
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         const blobUrl = URL.createObjectURL(blob);
         const recording: Recording = {
@@ -210,7 +217,7 @@ export function ShadowingWorkspace() {
 
         const state = useLessonStore.getState();
         const s = state.currentSentence();
-        if (!s) {
+        if (!s || s.id !== recordingSid) {
           URL.revokeObjectURL(blobUrl);
           stream.getTracks().forEach((t) => t.stop());
           return;
@@ -232,8 +239,9 @@ export function ShadowingWorkspace() {
       setIsRecording(true);
     } catch (err) {
       console.error("无法访问麦克风:", err);
+      setMicError("麦克风权限被拒绝，请在浏览器设置中允许访问麦克风后重试");
     }
-  }, []);
+  }, [sentence?.id]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
@@ -510,6 +518,13 @@ export function ShadowingWorkspace() {
       {/* Recording section */}
       {!editingText && (
         <div className="w-full max-w-md space-y-2.5">
+          {/* Mic error */}
+          {micError && (
+            <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-center">
+              {micError}
+            </div>
+          )}
+
           {/* Record button row */}
           <div className="flex items-center justify-center gap-1.5">
             {!isRecording ? (

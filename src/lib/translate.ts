@@ -56,7 +56,8 @@ export async function translateText(text: string): Promise<string> {
   if (!text || !text.trim()) return "";
   try {
     return await translateOne(text.trim());
-  } catch {
+  } catch (err) {
+    console.warn("翻译失败:", err);
     return "";
   }
 }

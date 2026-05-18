@@ -126,6 +126,7 @@ export function DictationWorkspace() {
       markCompleted(s.id, "dictation");
       setTimeout(() => {
         const state = useLessonStore.getState();
+        if (state.currentSentence()?.id !== s.id) return;
         if (!state.isLastSentence()) {
           state.nextSentence();
         }
@@ -151,6 +152,7 @@ export function DictationWorkspace() {
       markCompleted(s.id, "dictation");
       setTimeout(() => {
         const state = useLessonStore.getState();
+        if (state.currentSentence()?.id !== s.id) return;
         if (!state.isLastSentence()) {
           state.nextSentence();
         }
