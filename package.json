@@ -1,0 +1,33 @@
+{
+  "name": "echo-lingo",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "clean": "rm -rf .next"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "dexie": "^4.2.1",
+    "diff": "^8.0.2",
+    "lucide-react": "^0.556.0",
+    "next": "^16.0.2",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "tailwind-merge": "^3.4.0",
+    "wavesurfer.js": "^7.10.1",
+    "zustand": "^5.0.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.15",
+    "@types/diff": "^8.0.0",
+    "@types/node": "^22.15.3",
+    "@types/react": "^19.1.11",
+    "@types/react-dom": "^19.1.9",
+    "tailwindcss": "^4.1.15",
+    "typescript": "^5.8.3"
+  }
+}

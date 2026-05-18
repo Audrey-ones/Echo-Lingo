@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Echo-Lingo 浅色模式配色对比</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    background: #e5e5e5;
+    display: flex;
+    gap: 24px;
+    padding: 32px;
+    min-height: 100vh;
+    align-items: flex-start;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* ── Panel ── */
+  .panel {
+    width: 480px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.10);
+  }
+  .panel-label {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 12px;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  /* ── Color definitions ── */
+  .theme-a {
+    --bg:      #fbf7f7;
+    --bg-card: #f9f2f2;
+    --border:  #f0e2e2;
+    --border2: #e4cdcd;
+    --text-dim:#b09090;
+    --text-mid:#9e7b7b;
+    --text-body:#8a6666;
+    --text-hi: #5c4242;
+    --text-head:#3d2d2d;
+    --text-top:#241a1a;
+  }
+
+  .theme-b {
+    --bg:      #f8f8f9;
+    --bg-card: #ffffff;
+    --border:  #e4e4e7;
+    --border2: #d4d4d8;
+    --text-dim:#a1a1aa;
+    --text-mid:#71717a;
+    --text-body:#52525b;
+    --text-hi: #3f3f46;
+    --text-head:#27272a;
+    --text-top:#18181b;
+  }
+
+  .content {
+    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 28px 24px;
+  }
+  .theme-a .content { background: var(--bg); color: var(--text-body); }
+  .theme-b .content { background: var(--bg); color: var(--text-body); }
+
+  /* ── Top bar ── */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    font-size: 12px;
+  }
+  .topbar-title { font-weight: 500; color: var(--text-hi); }
+  .topbar-progress {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .progress-track {
+    width: 80px; height: 5px; border-radius: 99px;
+    background: var(--border); overflow: hidden;
+  }
+  .progress-fill {
+    width: 35%; height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, #6366f1, #818cf8);
+  }
+  .topbar-mode {
+    display: flex; gap: 1px; background: var(--border);
+    border-radius: 10px; padding: 2px;
+  }
+  .topbar-mode button {
+    padding: 4px 12px; border-radius: 8px; border: none; cursor: pointer;
+    font-size: 11px; font-weight: 500;
+    background: transparent; color: var(--text-mid);
+  }
+  .topbar-mode button.active {
+    background: var(--border2); color: var(--text-top);
+  }
+
+  /* ── Waveform ── */
+  .waveform {
+    height: 80px; border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .waveform-bars {
+    display: flex; align-items: flex-end; gap: 2px; height: 40px;
+  }
+  .waveform-bars span {
+    width: 3px; border-radius: 2px;
+    background: var(--text-dim); opacity: 0.5;
+  }
+  .wave-badge {
+    position: absolute; top: 10px; left: 14px;
+    font-size: 10px; font-family: "JetBrains Mono", monospace;
+    padding: 3px 10px; border-radius: 99px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    color: var(--text-mid);
+  }
+
+  /* ── Workspace ── */
+  .workspace {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 12px; padding: 8px 0;
+  }
+  .pill-row {
+    display: flex; gap: 5px;
+  }
+  .pill {
+    width: 28px; height: 28px; border-radius: 8px;
+    font-size: 11px; font-family: "JetBrains Mono", monospace;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-dim);
+  }
+  .pill.current {
+    border-color: rgba(99,102,241,0.4);
+    background: rgba(99,102,241,0.12);
+    color: #6366f1;
+    box-shadow: 0 0 12px rgba(99,102,241,0.12);
+  }
+  .pill.done {
+    border-color: rgba(34,197,94,0.2);
+    background: rgba(34,197,94,0.06);
+    color: #22c55e;
+  }
+
+  .ref-card {
+    padding: 6px 14px; border-radius: 8px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    text-align: center; font-family: "JetBrains Mono", monospace;
+    font-size: 14px; font-weight: 300; line-height: 1.7;
+    color: var(--text-head);
+  }
+
+  .input-area {
+    width: 100%; padding: 10px;
+    background: transparent; border: none;
+    border-bottom: 2px solid var(--border);
+    text-align: center; font-size: 20px;
+    font-family: "JetBrains Mono", monospace; font-weight: 300;
+    color: var(--text-head);
+    outline: none;
+  }
+  .input-area:focus { border-bottom-color: rgba(99,102,241,0.6); }
+  .input-area::placeholder { color: var(--text-dim); }
+
+  .recording-bar {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .btn {
+    padding: 6px 14px; border-radius: 99px;
+    font-size: 12px; border: 1px solid var(--border);
+    background: var(--bg-card); color: var(--text-body);
+    cursor: pointer; display: flex; align-items: center; gap: 5px;
+  }
+  .btn.primary {
+    border-color: rgba(99,102,241,0.2);
+    background: rgba(99,102,241,0.06);
+    color: #6366f1;
+  }
+
+  .rec-card {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px; border-radius: 12px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    font-size: 11px;
+  }
+  .rec-card .rec-wave {
+    flex: 1; height: 28px; display: flex; align-items: flex-end; gap: 1.5px;
+  }
+  .rec-card .rec-wave span {
+    width: 2px; border-radius: 1.5px;
+    background: var(--text-dim); opacity: 0.45;
+  }
+
+  .translation {
+    font-size: 13px; color: var(--text-mid); text-align: center;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    display: flex; align-items: center; justify-content: center;
+    gap: 14px; padding: 8px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+    font-size: 10px; color: var(--text-mid);
+    flex-wrap: wrap;
+  }
+  .kbd {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 18px; min-width: 18px; padding: 0 5px;
+    font-size: 9px; border-radius: 3px;
+    font-family: "JetBrains Mono", monospace;
+    background: var(--border); color: var(--text-body);
+    border: 1px solid var(--border2);
+  }
+
+  /* ── Labels ── */
+  .color-swatch-row {
+    display: flex; gap: 4px; align-items: center;
+    margin-top: 20px; padding-top: 16px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .swatch {
+    width: 18px; height: 18px; border-radius: 4px;
+    border: 1px solid rgba(0,0,0,0.08);
+    flex-shrink: 0;
+  }
+
+  .section-label {
+    font-size: 10px; text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ Panel A: Current Dusty Rose ═══ -->
+<div class="panel theme-a">
+  <div class="panel-label" style="background:#8a6666;">当前 — Dusty Rose 暖粉白</div>
+  <div class="content">
+    <!-- TopBar -->
+    <div class="topbar">
+      <span class="topbar-title">Lesson Title</span>
+      <div class="topbar-progress">
+        <div class="progress-track"><div class="progress-fill"></div></div>
+        <span style="color:var(--text-mid);font-size:10px;">3/15</span>
+        <div class="topbar-mode">
+          <button class="active">听写</button><button>跟读</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Waveform -->
+    <div class="waveform">
+      <span class="wave-badge">1.0x</span>
+      <div class="waveform-bars">
+        <span style="height:20px"></span><span style="height:32px"></span><span style="height:26px"></span><span style="height:38px"></span><span style="height:24px"></span><span style="height:36px"></span><span style="height:18px"></span><span style="height:40px"></span><span style="height:28px"></span><span style="height:34px"></span><span style="height:22px"></span><span style="height:30px"></span><span style="height:16px"></span><span style="height:35px"></span><span style="height:26px"></span><span style="height:40px"></span><span style="height:20px"></span><span style="height:33px"></span><span style="height:24px"></span><span style="height:38px"></span><span style="height:18px"></span><span style="height:36px"></span><span style="height:28px"></span><span style="height:32px"></span>
+      </div>
+    </div>
+
+    <!-- Workspace -->
+    <div class="workspace">
+      <div style="font-size:10px;font-family:monospace;color:var(--text-dim);">
+        #s_003
+      </div>
+      <div class="pill-row">
+        <span class="pill done">1</span><span class="pill done">2</span><span class="pill current">3</span><span class="pill">4</span><span class="pill">5</span><span class="pill">6</span><span class="pill">7</span><span class="pill">8</span>
+      </div>
+      <div class="ref-card">The quick brown fox jumps over the lazy dog.</div>
+      <input class="input-area" placeholder="输入你听到的内容..." value="The quick brown fox jum">
+      <p class="translation">翻译：那只敏捷的棕色狐狸跳过了那只懒狗</p>
+      <div class="recording-bar">
+        <button class="btn">录制跟读</button>
+        <button class="btn">原音</button>
+      </div>
+      <div class="rec-card">
+        <span style="font-size:9px;color:var(--text-dim);">#2</span>
+        <div class="rec-wave">
+          <span style="height:8px"></span><span style="height:18px"></span><span style="height:12px"></span><span style="height:26px"></span><span style="height:14px"></span><span style="height:22px"></span><span style="height:10px"></span><span style="height:28px"></span><span style="height:16px"></span><span style="height:20px"></span><span style="height:12px"></span><span style="height:24px"></span><span style="height:14px"></span><span style="height:18px"></span><span style="height:10px"></span><span style="height:22px"></span><span style="height:16px"></span><span style="height:28px"></span><span style="height:12px"></span><span style="height:20px"></span>
+        </div>
+        <span style="font-size:9px;">▶ 🔊 🗑</span>
+      </div>
+      <button class="btn primary">标记已跟读 &nbsp;<span style="font-size:10px;opacity:0.5;">Enter</span></button>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <span><span class="kbd">Space</span> 播放</span>
+      <span><span class="kbd">/</span> 循环</span>
+      <span><span class="kbd">↑</span><span class="kbd">↓</span> 切换</span>
+      <span><span class="kbd">⇧</span>+<span class="kbd">←</span><span class="kbd">→</span> 1.0x</span>
+      <span><span class="kbd">Tab</span> 翻译</span>
+      <span><span class="kbd">Enter</span> 提交</span>
+    </div>
+
+    <!-- Color swatches -->
+    <div class="color-swatch-row">
+      <span class="section-label" style="width:100%;">背景色阶</span>
+      <span class="swatch" style="background:#fbf7f7;" title="zinc-950"></span>
+      <span class="swatch" style="background:#f9f2f2;" title="zinc-900 card"></span>
+      <span class="swatch" style="background:#f0e2e2;" title="zinc-800 border"></span>
+      <span class="swatch" style="background:#e4cdcd;" title="zinc-700"></span>
+      <span class="swatch" style="background:#b09090;" title="zinc-600"></span>
+      <span class="swatch" style="background:#9e7b7b;" title="zinc-500"></span>
+      <span class="swatch" style="background:#8a6666;" title="zinc-400 body"></span>
+      <span class="swatch" style="background:#5c4242;" title="zinc-300"></span>
+      <span class="swatch" style="background:#3d2d2d;" title="zinc-200 highlight"></span>
+      <span class="swatch" style="background:#241a1a;" title="zinc-100 top"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Panel B: Proposed Neutral ═══ -->
+<div class="panel theme-b">
+  <div class="panel-label" style="background:#52525b;">方案 — 中性冷灰白</div>
+  <div class="content">
+    <div class="topbar">
+      <span class="topbar-title">Lesson Title</span>
+      <div class="topbar-progress">
+        <div class="progress-track"><div class="progress-fill"></div></div>
+        <span style="color:var(--text-mid);font-size:10px;">3/15</span>
+        <div class="topbar-mode">
+          <button class="active">听写</button><button>跟读</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="waveform">
+      <span class="wave-badge">1.0x</span>
+      <div class="waveform-bars">
+        <span style="height:20px"></span><span style="height:32px"></span><span style="height:26px"></span><span style="height:38px"></span><span style="height:24px"></span><span style="height:36px"></span><span style="height:18px"></span><span style="height:40px"></span><span style="height:28px"></span><span style="height:34px"></span><span style="height:22px"></span><span style="height:30px"></span><span style="height:16px"></span><span style="height:35px"></span><span style="height:26px"></span><span style="height:40px"></span><span style="height:20px"></span><span style="height:33px"></span><span style="height:24px"></span><span style="height:38px"></span><span style="height:18px"></span><span style="height:36px"></span><span style="height:28px"></span><span style="height:32px"></span>
+      </div>
+    </div>
+
+    <div class="workspace">
+      <div style="font-size:10px;font-family:monospace;color:var(--text-dim);">
+        #s_003
+      </div>
+      <div class="pill-row">
+        <span class="pill done">1</span><span class="pill done">2</span><span class="pill current">3</span><span class="pill">4</span><span class="pill">5</span><span class="pill">6</span><span class="pill">7</span><span class="pill">8</span>
+      </div>
+      <div class="ref-card">The quick brown fox jumps over the lazy dog.</div>
+      <input class="input-area" placeholder="输入你听到的内容..." value="The quick brown fox jum">
+      <p class="translation">翻译：那只敏捷的棕色狐狸跳过了那只懒狗</p>
+      <div class="recording-bar">
+        <button class="btn">录制跟读</button>
+        <button class="btn">原音</button>
+      </div>
+      <div class="rec-card">
+        <span style="font-size:9px;color:var(--text-dim);">#2</span>
+        <div class="rec-wave">
+          <span style="height:8px"></span><span style="height:18px"></span><span style="height:12px"></span><span style="height:26px"></span><span style="height:14px"></span><span style="height:22px"></span><span style="height:10px"></span><span style="height:28px"></span><span style="height:16px"></span><span style="height:20px"></span><span style="height:12px"></span><span style="height:24px"></span><span style="height:14px"></span><span style="height:18px"></span><span style="height:10px"></span><span style="height:22px"></span><span style="height:16px"></span><span style="height:28px"></span><span style="height:12px"></span><span style="height:20px"></span>
+        </div>
+        <span style="font-size:9px;">▶ 🔊 🗑</span>
+      </div>
+      <button class="btn primary">标记已跟读 &nbsp;<span style="font-size:10px;opacity:0.5;">Enter</span></button>
+    </div>
+
+    <div class="footer">
+      <span><span class="kbd">Space</span> 播放</span>
+      <span><span class="kbd">/</span> 循环</span>
+      <span><span class="kbd">↑</span><span class="kbd">↓</span> 切换</span>
+      <span><span class="kbd">⇧</span>+<span class="kbd">←</span><span class="kbd">→</span> 1.0x</span>
+      <span><span class="kbd">Tab</span> 翻译</span>
+      <span><span class="kbd">Enter</span> 提交</span>
+    </div>
+
+    <div class="color-swatch-row">
+      <span class="section-label" style="width:100%;">背景色阶</span>
+      <span class="swatch" style="background:#f8f8f9;" title="zinc-950"></span>
+      <span class="swatch" style="background:#ffffff;" title="zinc-900 card"></span>
+      <span class="swatch" style="background:#e4e4e7;" title="zinc-800 border"></span>
+      <span class="swatch" style="background:#d4d4d8;" title="zinc-700"></span>
+      <span class="swatch" style="background:#a1a1aa;" title="zinc-600"></span>
+      <span class="swatch" style="background:#71717a;" title="zinc-500"></span>
+      <span class="swatch" style="background:#52525b;" title="zinc-400 body"></span>
+      <span class="swatch" style="background:#3f3f46;" title="zinc-300"></span>
+      <span class="swatch" style="background:#27272a;" title="zinc-200 highlight"></span>
+      <span class="swatch" style="background:#18181b;" title="zinc-100 top"></span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,32 @@
+{
+  "id": "demo_01",
+  "title": "示例课程 - Hello World",
+  "source_audio": "demo_01.mp3",
+  "metadata": {
+    "difficulty": "A1",
+    "word_count": 12
+  },
+  "sentences": [
+    {
+      "id": "s_01",
+      "start_time": 0.0,
+      "end_time": 3.5,
+      "en": "Hello, my name is Tom.",
+      "zh": "你好，我叫汤姆。"
+    },
+    {
+      "id": "s_02",
+      "start_time": 3.5,
+      "end_time": 7.2,
+      "en": "I come from London, England.",
+      "zh": "我来自英国伦敦。"
+    },
+    {
+      "id": "s_03",
+      "start_time": 7.2,
+      "end_time": 11.0,
+      "en": "It is very nice to meet you.",
+      "zh": "很高兴见到你。"
+    }
+  ]
+}

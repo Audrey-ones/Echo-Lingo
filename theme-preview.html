@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Echo-Lingo 浅色主题配色预览</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Inter, system-ui, -apple-system, sans-serif; padding: 40px; background: #e8e6e3; overflow: auto; height: auto; }
+h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; color: #1a1a1a; }
+.subtitle { font-size: 13px; color: #888; margin-bottom: 36px; }
+.grid { display: flex; gap: 24px; flex-wrap: wrap; }
+.card { flex: 1; min-width: 320px; max-width: 420px; border-radius: 16px; padding: 28px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.card h2 { font-size: 15px; font-weight: 600; }
+.card .desc { font-size: 12px; line-height: 1.5; }
+.sample-card { border-radius: 10px; padding: 16px; border: 1px solid; }
+.sample-card p { font-size: 14px; line-height: 1.7; }
+.sample-card .translation { font-size: 12px; margin-top: 4px; }
+.tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag { font-size: 11px; padding: 4px 10px; border-radius: 6px; font-weight: 500; }
+.progress { height: 6px; border-radius: 3px; width: 100%; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 3px; width: 67%; transition: width 0.3s; }
+.input-box { font-size: 13px; padding: 10px 14px; border-radius: 8px; border: 1.5px solid; }
+.button { font-size: 12px; padding: 6px 14px; border-radius: 8px; border: 1.5px solid; cursor: pointer; font-weight: 500; background: none; display: inline-block; text-align: center; }
+.button:hover { opacity: 0.8; }
+.color-swatch { display: flex; gap: 4px; margin-top: 8px; }
+.swatch { width: 18px; height: 18px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.08); }
+</style>
+</head>
+<body>
+
+<h1>Echo-Lingo 浅色主题 · 三款粉调配色对比</h1>
+<p class="subtitle">每张卡片展示背景、卡片、边框、药丸标签、进度条、输入框等核心 UI 元素的配色效果</p>
+
+<div class="grid">
+
+<!-- Scheme 1: 玫瑰灰棕 -->
+<div class="card" style="background:#faf7f6;">
+  <h2 style="color:#241c18;">1. 玫瑰灰棕 · Rose Taupe</h2>
+  <p class="desc" style="color:#a08b83;">最克制的一款。粉感若有若无，像高级羊绒衫，长时间阅读不疲劳。</p>
+
+  <div class="sample-card" style="background:#f6f0ee; border-color:#ebe0db;">
+    <p style="color:#3d302b;">"The best way to predict the future is to create it."</p>
+    <p class="translation" style="color:#a08b83;">最好的预测未来的方式就是去创造它。</p>
+  </div>
+
+  <div class="tags">
+    <span class="tag" style="background:#ddcdc6; color:#241c18;">听写</span>
+    <span class="tag" style="background:#ddcdc6; color:#241c18;">跟读</span>
+    <span class="tag" style="background:#ddcdc6; color:#241c18;">已完成</span>
+  </div>
+
+  <div class="progress" style="background:#ddcdc6;">
+    <div class="progress-fill" style="background:#a08b83;"></div>
+  </div>
+
+  <div class="input-box" style="background:#f6f0ee; color:#3d302b; border-color:#ebe0db;">输入你听到的内容...</div>
+
+  <div style="display:flex; gap:8px;">
+    <span class="button" style="background:#f6f0ee; color:#3d302b; border-color:#ebe0db;">取消</span>
+    <span class="button" style="background:#3d302b; color:#faf7f6; border-color:#3d302b;">确认</span>
+  </div>
+
+  <div class="color-swatch">
+    <span class="swatch" style="background:#faf7f6;" title="背景"></span>
+    <span class="swatch" style="background:#f6f0ee;" title="卡片"></span>
+    <span class="swatch" style="background:#ebe0db;" title="边框"></span>
+    <span class="swatch" style="background:#ddcdc6;" title="药丸"></span>
+    <span class="swatch" style="background:#a08b83;" title="辅助文字"></span>
+    <span class="swatch" style="background:#3d302b;" title="正文"></span>
+    <span class="swatch" style="background:#241c18;" title="标题"></span>
+  </div>
+</div>
+
+<!-- Scheme 2: 烟粉灰 -->
+<div class="card" style="background:#fbf7f7;">
+  <h2 style="color:#241a1a;">2. 烟粉灰 · Dusty Rose</h2>
+  <p class="desc" style="color:#a88787;">粉感最明显，但灰调压住了甜腻，像干枯玫瑰花瓣的质感。三款中最温柔。</p>
+
+  <div class="sample-card" style="background:#f9f2f2; border-color:#f0e2e2;">
+    <p style="color:#3d2d2d;">"The best way to predict the future is to create it."</p>
+    <p class="translation" style="color:#a88787;">最好的预测未来的方式就是去创造它。</p>
+  </div>
+
+  <div class="tags">
+    <span class="tag" style="background:#e4cdcd; color:#241a1a;">听写</span>
+    <span class="tag" style="background:#e4cdcd; color:#241a1a;">跟读</span>
+    <span class="tag" style="background:#e4cdcd; color:#241a1a;">已完成</span>
+  </div>
+
+  <div class="progress" style="background:#e4cdcd;">
+    <div class="progress-fill" style="background:#a88787;"></div>
+  </div>
+
+  <div class="input-box" style="background:#f9f2f2; color:#3d2d2d; border-color:#f0e2e2;">输入你听到的内容...</div>
+
+  <div style="display:flex; gap:8px;">
+    <span class="button" style="background:#f9f2f2; color:#3d2d2d; border-color:#f0e2e2;">取消</span>
+    <span class="button" style="background:#3d2d2d; color:#fbf7f7; border-color:#3d2d2d;">确认</span>
+  </div>
+
+  <div class="color-swatch">
+    <span class="swatch" style="background:#fbf7f7;" title="背景"></span>
+    <span class="swatch" style="background:#f9f2f2;" title="卡片"></span>
+    <span class="swatch" style="background:#f0e2e2;" title="边框"></span>
+    <span class="swatch" style="background:#e4cdcd;" title="药丸"></span>
+    <span class="swatch" style="background:#a88787;" title="辅助文字"></span>
+    <span class="swatch" style="background:#3d2d2d;" title="正文"></span>
+    <span class="swatch" style="background:#241a1a;" title="标题"></span>
+  </div>
+</div>
+
+<!-- Scheme 3: 藕粉灰 -->
+<div class="card" style="background:#f9f7f8;">
+  <h2 style="color:#221a1c;">3. 藕粉灰 · Mauve</h2>
+  <p class="desc" style="color:#9e8a90;">偏紫调的最冷粉，精致但不刻板，适合偏理性、冷静的风格偏好。</p>
+
+  <div class="sample-card" style="background:#f5f1f3; border-color:#ebe0e4;">
+    <p style="color:#3a2e32;">"The best way to predict the future is to create it."</p>
+    <p class="translation" style="color:#9e8a90;">最好的预测未来的方式就是去创造它。</p>
+  </div>
+
+  <div class="tags">
+    <span class="tag" style="background:#ddccd2; color:#221a1c;">听写</span>
+    <span class="tag" style="background:#ddccd2; color:#221a1c;">跟读</span>
+    <span class="tag" style="background:#ddccd2; color:#221a1c;">已完成</span>
+  </div>
+
+  <div class="progress" style="background:#ddccd2;">
+    <div class="progress-fill" style="background:#9e8a90;"></div>
+  </div>
+
+  <div class="input-box" style="background:#f5f1f3; color:#3a2e32; border-color:#ebe0e4;">输入你听到的内容...</div>
+
+  <div style="display:flex; gap:8px;">
+    <span class="button" style="background:#f5f1f3; color:#3a2e32; border-color:#ebe0e4;">取消</span>
+    <span class="button" style="background:#3a2e32; color:#f9f7f8; border-color:#3a2e32;">确认</span>
+  </div>
+
+  <div class="color-swatch">
+    <span class="swatch" style="background:#f9f7f8;" title="背景"></span>
+    <span class="swatch" style="background:#f5f1f3;" title="卡片"></span>
+    <span class="swatch" style="background:#ebe0e4;" title="边框"></span>
+    <span class="swatch" style="background:#ddccd2;" title="药丸"></span>
+    <span class="swatch" style="background:#9e8a90;" title="辅助文字"></span>
+    <span class="swatch" style="background:#3a2e32;" title="正文"></span>
+    <span class="swatch" style="background:#221a1c;" title="标题"></span>
+  </div>
+</div>
+
+</div>
+
+</body>
+</html>
