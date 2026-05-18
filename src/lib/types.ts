@@ -27,5 +27,7 @@ export interface LessonProgress {
   lesson_id: string;
   completed_dictation: string[];
   completed_shadowing: string[];
+  current_index: number;
+  dictation_records: Record<string, DictationRecord>;
   last_accessed_at: number;
 }

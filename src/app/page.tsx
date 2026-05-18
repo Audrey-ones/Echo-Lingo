@@ -7,9 +7,11 @@ import { Play, Pencil, Check, X } from "lucide-react";
 import { TopBar } from "@/components/layout/top-bar";
 import { FooterBar } from "@/components/layout/footer-bar";
 import { FileUploader } from "@/components/layout/file-uploader";
+import { CourseList } from "@/components/layout/course-list";
 import { DictationWorkspace } from "@/components/dictation/dictation-workspace";
 import { ShadowingWorkspace } from "@/components/shadowing/shadowing-workspace";
-import { useLessonStore } from "@/stores/lesson-store";
+import { useLessonStore, type CourseSummary } from "@/stores/lesson-store";
+import { db } from "@/lib/db";
 import { useKeyboard } from "@/hooks/use-keyboard";
 
 export default function Home() {
@@ -24,6 +26,7 @@ export default function Home() {
   const currentSentence = useLessonStore((s) => s.currentSentence);
   const currentIndex = useLessonStore((s) => s.currentIndex);
   const isLooping = useLessonStore((s) => s.isLooping);
+  const loopCount = useLessonStore((s) => s.loopCount);
   const completedInDictation = useLessonStore((s) => s.completedInDictation);
   const completedInShadowing = useLessonStore((s) => s.completedInShadowing);
   const completedSentences = mode === "dictation" ? completedInDictation : completedInShadowing;
@@ -33,11 +36,26 @@ export default function Home() {
   const regionsRef = useRef<RegionsPlugin | null>(null);
   const [editingTranslation, setEditingTranslation] = useState(false);
   const [editZhValue, setEditZhValue] = useState("");
+  const [courses, setCourses] = useState<CourseSummary[]>([]);
+  const [coursesLoaded, setCoursesLoaded] = useState(false);
   const hasInteractedRef = useRef(false);
   const timeupdateSyncRef = useRef(false);
+  const wsReadyRef = useRef(false);
   const lastLoadedUrlRef = useRef<string | null>(null);
 
   const isReady = !!(lesson && audioBlobUrl);
+
+  // Load saved courses on mount
+  useEffect(() => {
+    let cancelled = false;
+    useLessonStore.getState().getAllCourses().then((list) => {
+      if (!cancelled) {
+        setCourses(list);
+        setCoursesLoaded(true);
+      }
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   // Sync theme state with DOM
   useEffect(() => {
@@ -53,20 +71,24 @@ export default function Home() {
   // Save translation for current sentence
   const handleSaveTranslation = useCallback(() => {
     const s = currentSentence();
-    if (!lesson || !s) return;
+    const currentLesson = useLessonStore.getState().lesson;
+    if (!currentLesson || !s) return;
     const updated = {
-      ...lesson,
-      sentences: lesson.sentences.map((sen) =>
+      ...currentLesson,
+      sentences: currentLesson.sentences.map((sen) =>
         sen.id === s.id ? { ...sen, zh: editZhValue.trim() } : sen
       ),
     };
     useLessonStore.getState().updateLesson(updated);
     setEditingTranslation(false);
-  }, [lesson, editZhValue, currentSentence]);
+  }, [editZhValue, currentSentence]);
 
   // Loop mode ref (always current, no effect dependency needed)
   const loopRef = useRef(isLooping);
   loopRef.current = isLooping;
+  const loopCountRef = useRef(loopCount);
+  loopCountRef.current = loopCount;
+  const loopIterationRef = useRef(0);
   const modeRef = useRef(mode);
   modeRef.current = mode;
 
@@ -97,6 +119,8 @@ export default function Home() {
       backend: "WebAudio",
     });
 
+    let destroyed = false;
+
     // Register regions plugin for sentence boundaries
     const regions = ws.registerPlugin(RegionsPlugin.create());
     regionsRef.current = regions;
@@ -114,6 +138,8 @@ export default function Home() {
     });
 
     ws.on("ready", () => {
+      if (destroyed) return;
+      wsReadyRef.current = true;
       setHasInteracted(false);
       hasInteractedRef.current = false;
 
@@ -145,7 +171,38 @@ export default function Home() {
     });
 
     ws.on("play", () => setIsPlaying(true));
-    ws.on("pause", () => setIsPlaying(false));
+    ws.on("pause", () => {
+      setIsPlaying(false);
+      // When looping, bounded play() fires pause (not finish) at sentence end.
+      // Check if we reached the sentence boundary to trigger loop logic.
+      if (!loopRef.current) return;
+      const state = useLessonStore.getState();
+      const s = state.currentSentence();
+      if (!s) return;
+      const cur = ws.getCurrentTime();
+      // Only trigger if we're at or past the sentence end (natural stop, not manual pause)
+      if (cur < s.end_time - 0.1) return;
+
+      const count = loopCountRef.current;
+      const absCount = Math.abs(count);
+      if (absCount > 0) {
+        loopIterationRef.current++;
+        if (loopIterationRef.current >= absCount) {
+          loopIterationRef.current = 0;
+          // Negative count = pause after loop (don't auto-advance)
+          if (count < 0) return;
+          if (!state.isLastSentence()) {
+            state.nextSentence();
+          }
+          return;
+        }
+      }
+      // Force visual reset before re-loop (fixes waveform not animating on repeats)
+      ws.setTime(s.start_time);
+      requestAnimationFrame(() => {
+        ws.play(s.start_time, s.end_time);
+      });
+    });
 
     // Sync currentIndex to playback position during continuous playback
     let lastSyncedIndex = -1;
@@ -167,13 +224,9 @@ export default function Home() {
       }
     });
 
-    // Single finish handler: update state + loop if enabled
+    // Fallback: fires when audio plays to actual end (rare with bounded play)
     ws.on("finish", () => {
       setIsPlaying(false);
-      if (!loopRef.current) return;
-      const s = useLessonStore.getState().currentSentence();
-      if (!s) return;
-      ws.play(s.start_time, s.end_time);
     });
 
     ws.on("error", (err) => {
@@ -186,8 +239,11 @@ export default function Home() {
     ws.load(audioBlobUrl);
 
     return () => {
+      destroyed = true;
       ws.destroy();
       wsRef.current = null;
+      wsReadyRef.current = false;
+      lastLoadedUrlRef.current = null;
       delete (window as any).__echoWavesurfer;
     };
   }, [audioBlobUrl, isReady]);
@@ -254,21 +310,19 @@ export default function Home() {
     ws.pause();
     ws.setTime(s.start_time);
 
-    const audioCtx = (ws as any).backend?.ac;
-    const play = () => {
-      if (state.isLooping) {
-        // Loop ON: constrain to current sentence
-        ws.play(s.start_time, s.end_time);
-      } else {
-        // Loop OFF: play continuously from this point
-        ws.play(s.start_time);
-      }
+    const endTime = state.isLooping ? s.end_time : undefined;
+
+    const doPlay = () => {
+      requestAnimationFrame(() => {
+        ws.play(s.start_time, endTime);
+      });
     };
 
+    const audioCtx = (ws as any).backend?.ac;
     if (audioCtx && audioCtx.state === "suspended") {
-      audioCtx.resume().then(play).catch(() => {});
+      audioCtx.resume().then(doPlay).catch(() => {});
     } else {
-      play();
+      doPlay();
     }
   }, []);
 
@@ -303,6 +357,9 @@ export default function Home() {
 
   const prevIndexRef = useRef(currentIndex);
   useEffect(() => {
+    if (prevIndexRef.current !== currentIndex) {
+      loopIterationRef.current = 0;
+    }
     if (
       hasInteractedRef.current &&
       prevIndexRef.current !== currentIndex &&
@@ -321,8 +378,55 @@ export default function Home() {
   useKeyboard();
 
   const handleBack = () => {
-    useLessonStore.setState({ lesson: null, audioBlobUrl: null, currentIndex: 0, dictationRecords: {} });
+    // Stop and destroy WaveSurfer to halt all playback
+    if (wsRef.current) {
+      wsRef.current.pause();
+      wsRef.current.destroy();
+      wsRef.current = null;
+      wsReadyRef.current = false;
+      delete (window as any).__echoWavesurfer;
+    }
+    // Revoke blob URL to free browser memory
+    const url = useLessonStore.getState().audioBlobUrl;
+    if (url) URL.revokeObjectURL(url);
+    hasInteractedRef.current = false;
+    loopIterationRef.current = 0;
+    timeupdateSyncRef.current = false;
+    lastLoadedUrlRef.current = null;
+    useLessonStore.getState().resetState();
+    useLessonStore.getState().getAllCourses().then(setCourses);
   };
+
+  const handleSelectCourse = useCallback(async (id: string) => {
+    const prevUrl = useLessonStore.getState().audioBlobUrl;
+    if (prevUrl) URL.revokeObjectURL(prevUrl);
+
+    const result = await useLessonStore.getState().loadLessonWithAudio(id);
+    if (!result) return;
+    const { lesson: lessonData, audioUrl } = result;
+
+    // Pre-load progress so it's applied synchronously (no render with empty records)
+    const progress = await db.progress.get(id);
+
+    const maxIndex = Math.max(0, (lessonData.sentences.length ?? 1) - 1);
+    timeupdateSyncRef.current = false;
+    loopIterationRef.current = 0;
+    useLessonStore.setState({
+      lesson: lessonData,
+      audioBlobUrl: audioUrl || undefined,
+      currentIndex: Math.min(progress?.current_index ?? 0, maxIndex),
+      dictationRecords: progress?.dictation_records ?? {},
+      completedInDictation: progress?.completed_dictation ?? [],
+      completedInShadowing: progress?.completed_shadowing ?? [],
+      isLooping: true,
+      loopCount: 3,
+    });
+  }, []);
+
+  const handleDeleteCourse = useCallback(async (id: string) => {
+    await useLessonStore.getState().deleteCourse(id);
+    setCourses((prev) => prev.filter((c) => c.id !== id));
+  }, []);
 
   const sentence = currentSentence();
 
@@ -441,9 +545,35 @@ export default function Home() {
         </div>
       )}
 
-      <div className="flex-1 flex flex-col items-center justify-center px-6">
-        {!isReady ? (
-          <FileUploader />
+      <div className="flex-1 flex flex-col items-center justify-center px-6 overflow-y-auto">
+        {!isReady && coursesLoaded && courses.length > 0 ? (
+          <div className="flex flex-col items-center gap-6 w-full max-w-md py-8">
+            <CourseList
+              courses={courses}
+              onSelect={handleSelectCourse}
+              onDelete={handleDeleteCourse}
+            />
+            <button
+              onClick={() => setCourses([])}
+              className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors underline underline-offset-4 decoration-zinc-800"
+            >
+              上传新课程
+            </button>
+          </div>
+        ) : !isReady ? (
+          <div className="flex flex-col items-center gap-4 w-full max-w-md">
+            <FileUploader />
+            {courses.length > 0 && (
+              <button
+                onClick={() => {
+                  useLessonStore.getState().getAllCourses().then(setCourses);
+                }}
+                className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors underline underline-offset-4 decoration-zinc-800"
+              >
+                返回课程列表
+              </button>
+            )}
+          </div>
         ) : mode === "dictation" ? (
           <DictationWorkspace key="dictation" />
         ) : (

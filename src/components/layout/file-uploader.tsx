@@ -4,7 +4,6 @@ import { useState, useCallback, useRef } from "react";
 import { Upload, Link, Download, Loader2, FileAudio, FileJson, Sparkles } from "lucide-react";
 import { useLessonStore } from "@/stores/lesson-store";
 import { analyzeAudio, analyzeAudioFine, downloadJson, extractAudioBuffer } from "@/lib/audio-analyzer";
-import { translateSentences } from "@/lib/translate";
 import type { LessonData } from "@/lib/types";
 
 export function FileUploader() {
@@ -37,8 +36,6 @@ export function FileUploader() {
         const { audioBuffer, blobUrl, fileName } =
           await extractAudioBuffer(source);
 
-        setAudioBlobUrl(blobUrl);
-
         setStatus("正在分析音频停顿...");
         const generatedLesson = sensitivity === "fine"
           ? await analyzeAudioFine(audioBuffer, { silenceThreshold: fineThreshold, minSilenceDuration: fineMinSilence })
@@ -50,20 +47,10 @@ export function FileUploader() {
         setSentenceCount(generatedLesson.sentences.length);
         generatedLessonRef.current = generatedLesson;
         setLesson(generatedLesson);
+        setAudioBlobUrl(blobUrl);
+        useLessonStore.getState().saveLessonToDB().catch(console.error);
 
-        setStatus("正在翻译...");
-        translateSentences(generatedLesson.sentences).then((translations) => {
-          const currentLesson = useLessonStore.getState().lesson;
-          if (!currentLesson) return;
-          const updated = { ...currentLesson };
-          updated.sentences = updated.sentences.map((s, i) => ({
-            ...s,
-            zh: s.zh || translations[i] || "",
-          }));
-          generatedLessonRef.current = updated;
-          useLessonStore.getState().updateLesson(updated);
-          setStatus("");
-        }).catch(console.error);
+        setStatus("");
       } catch (err) {
         console.error("处理失败:", err);
         setStatus("");
@@ -84,6 +71,7 @@ export function FileUploader() {
       const file = e.target.files?.[0];
       if (!file) return;
       handleLoad(file, file.name);
+      e.target.value = "";
     },
     [handleLoad]
   );
@@ -107,25 +95,23 @@ export function FileUploader() {
             setError("JSON 格式不符，请检查是否为有效的课程文件。");
             return;
           }
+          for (const s of data.sentences) {
+            if (!s.id || typeof s.start_time !== "number" || typeof s.end_time !== "number") {
+              setError("JSON 格式不符：句子缺少 id/start_time/end_time 字段。");
+              return;
+            }
+          }
           generatedLessonRef.current = data;
           setSentenceCount(data.sentences.length);
           setLesson(data);
-          translateSentences(data.sentences).then((translations) => {
-            const current = useLessonStore.getState().lesson;
-            if (!current) return;
-            const updated = { ...current };
-            updated.sentences = updated.sentences.map((s, i) => ({
-              ...s,
-              zh: s.zh || translations[i] || "",
-            }));
-            generatedLessonRef.current = updated;
-            useLessonStore.getState().updateLesson(updated);
-          }).catch(console.error);
+          useLessonStore.getState().saveLessonToDB().catch(console.error);
+          setStatus("JSON 课程已加载。如需开始练习，请上传对应的音频文件。");
         } catch {
           setError("JSON 解析失败，请检查文件格式。");
         }
       };
       reader.readAsText(file);
+      e.target.value = "";
     },
     [setLesson]
   );
@@ -350,6 +336,7 @@ export function FileUploader() {
               <Download className="w-3.5 h-3.5" />
               导出 JSON 备份
             </button>
+
           </div>
         )}
       </div>

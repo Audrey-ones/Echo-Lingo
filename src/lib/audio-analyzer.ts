@@ -41,11 +41,18 @@ async function extractFromVideo(blobUrl: string): Promise<AudioBuffer> {
   gain.connect(audioCtx.destination);
 
   const chunks: Blob[] = [];
-  const recorder = new MediaRecorder(dest.stream, {
-    mimeType: MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-      ? "audio/webm;codecs=opus"
-      : "audio/webm",
-  });
+  let recorder: MediaRecorder;
+  try {
+    recorder = new MediaRecorder(dest.stream, {
+      mimeType: MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : "audio/webm",
+    });
+  } catch (err) {
+    audioCtx.close().catch(() => {});
+    video.remove();
+    throw err;
+  }
 
   return new Promise((resolve, reject) => {
     let settled = false;
@@ -168,17 +175,28 @@ export async function extractAudioBuffer(
   }
 
   // Try direct decode (audio files)
+  let audioContext: AudioContext | null = null;
   try {
-    const audioContext = new AudioContext();
+    audioContext = new AudioContext();
     const audioBuffer = await audioContext.decodeAudioData(arrayBuffer.slice(0));
     await audioContext.close();
+    audioContext = null;
     return { audioBuffer, blobUrl, fileName };
   } catch {
     // Video or unsupported — extract via media element
+  } finally {
+    if (audioContext) {
+      audioContext.close().catch(() => {});
+    }
   }
 
-  const audioBuffer = await extractFromVideo(blobUrl);
-  return { audioBuffer, blobUrl, fileName };
+  try {
+    const audioBuffer = await extractFromVideo(blobUrl);
+    return { audioBuffer, blobUrl, fileName };
+  } catch (err) {
+    URL.revokeObjectURL(blobUrl);
+    throw err;
+  }
 }
 
 // ============================================================
@@ -210,6 +228,8 @@ export async function analyzeAudio(
   const sampleRate = audioBuffer.sampleRate;
   const totalSamples = data.length;
   const totalDuration = audioBuffer.duration;
+
+  if (totalDuration < 0.5) { throw new Error("音频时长过短（小于0.5秒），无法分析"); }
 
   // Find silent regions
   const silentRegions: SilenceSegment[] = [];
@@ -338,6 +358,8 @@ export async function analyzeAudioFine(
   const totalSamples = data.length;
   const totalDuration = audioBuffer.duration;
 
+  if (totalDuration < 0.5) { throw new Error("音频时长过短（小于0.5秒），无法分析"); }
+
   const WINDOW_SIZE = 1024;
   const windowCount = Math.floor(totalSamples / WINDOW_SIZE);
   const minSilentWindows = Math.ceil(minSilenceDuration / (WINDOW_SIZE / sampleRate));
@@ -449,5 +471,5 @@ export function downloadJson(lesson: LessonData, filename: string) {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

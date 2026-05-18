@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import WaveSurfer from "wavesurfer.js";
 import { Pencil, Volume2, Mic, Square, Play, Hash, Sparkles, Trash2 } from "lucide-react";
 import { useLessonStore } from "@/stores/lesson-store";
-import { translateText } from "@/lib/translate";
 import { EditableField } from "@/components/shared/editable-field";
 import { cn } from "@/lib/utils";
 import type { LessonData } from "@/lib/types";
@@ -40,11 +39,11 @@ export function ShadowingWorkspace() {
   const [isDark, setIsDark] = useState(true);
   const [micError, setMicError] = useState<string | null>(null);
   const recordingsMapRef = useRef<Map<string, Recording[]>>(new Map());
-  const recordingSentenceIdRef = useRef<string | null>(null);
   const waveSurfersRef = useRef<Map<string, WaveSurfer>>(new Map());
   const waveformElsRef = useRef<Map<string, HTMLDivElement>>(new Map());
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const isStartingRef = useRef(false);
   const pillsRef = useRef<HTMLDivElement>(null);
   const currentPillRef = useRef<HTMLButtonElement>(null);
 
@@ -170,23 +169,19 @@ export function ShadowingWorkspace() {
     }
   }, [isDark]);
 
-  // Cleanup all WaveSurfers and blob URLs on unmount
+  // Cleanup WaveSurfers on unmount (preserve recordings across mode switches)
   useEffect(() => {
     return () => {
       for (const ws of waveSurfersRef.current.values()) {
         ws.destroy();
       }
       waveSurfersRef.current.clear();
-      for (const recordings of recordingsMapRef.current.values()) {
-        for (const r of recordings) {
-          URL.revokeObjectURL(r.blobUrl);
-        }
-      }
-      recordingsMapRef.current.clear();
     };
   }, []);
 
   const startRecording = useCallback(async () => {
+    if (isStartingRef.current) return;
+    isStartingRef.current = true;
     try {
       setMicError(null);
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -197,15 +192,18 @@ export function ShadowingWorkspace() {
       });
       mediaRecorderRef.current = recorder;
       chunksRef.current = [];
-      recordingSentenceIdRef.current = sentence?.id ?? null;
+      const capturedSentenceId = sentence?.id ?? null;
 
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data);
       };
 
       recorder.onstop = () => {
-        const recordingSid = recordingSentenceIdRef.current;
-        recordingSentenceIdRef.current = null;
+        const recordingSid = capturedSentenceId;
+        if (!recordingSid) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         const blobUrl = URL.createObjectURL(blob);
         const recording: Recording = {
@@ -215,22 +213,14 @@ export function ShadowingWorkspace() {
           createdAt: Date.now(),
         };
 
-        const state = useLessonStore.getState();
-        const s = state.currentSentence();
-        if (!s || s.id !== recordingSid) {
-          URL.revokeObjectURL(blobUrl);
-          stream.getTracks().forEach((t) => t.stop());
-          return;
-        }
-
         const map = recordingsMapRef.current;
-        const existing = map.get(s.id) ?? [];
+        const existing = map.get(recordingSid) ?? [];
         const MAX_PER_SENTENCE = 5;
         const trimmed = [recording, ...existing].slice(0, MAX_PER_SENTENCE);
         for (const removed of existing.slice(MAX_PER_SENTENCE - 1)) {
           URL.revokeObjectURL(removed.blobUrl);
         }
-        map.set(s.id, trimmed);
+        map.set(recordingSid, trimmed);
         setRecordingsVersion((v) => v + 1);
         stream.getTracks().forEach((t) => t.stop());
       };
@@ -239,7 +229,16 @@ export function ShadowingWorkspace() {
       setIsRecording(true);
     } catch (err) {
       console.error("无法访问麦克风:", err);
-      setMicError("麦克风权限被拒绝，请在浏览器设置中允许访问麦克风后重试");
+      const e = err as DOMException;
+      if (e.name === "NotAllowedError" || e.name === "PermissionDeniedError") {
+        setMicError("麦克风权限被拒绝，请在浏览器设置中允许访问麦克风后重试");
+      } else if (e.name === "NotFoundError") {
+        setMicError("未检测到麦克风设备，请确认麦克风已连接");
+      } else {
+        setMicError("无法访问麦克风，请检查设备连接或浏览器权限设置");
+      }
+    } finally {
+      isStartingRef.current = false;
     }
   }, [sentence?.id]);
 
@@ -267,12 +266,16 @@ export function ShadowingWorkspace() {
     const s = state.currentSentence();
     if (!s) return;
 
-    original.pause();
-    original.setTime(s.start_time);
-    original.play(s.start_time, s.end_time);
+    try {
+      original.pause();
+      original.setTime(s.start_time);
+      original.play(s.start_time, s.end_time);
+    } catch { /* WaveSurfer may be in an invalid state */ }
 
-    recording.stop();
-    recording.play(0);
+    try {
+      recording.stop();
+      recording.play(0);
+    } catch { /* recording WaveSurfer may be in an invalid state */ }
 
     setIsPlayingBoth(true);
   }, []);
@@ -292,8 +295,9 @@ export function ShadowingWorkspace() {
     const item = list.find((r) => r.id === recordingId);
     if (item) URL.revokeObjectURL(item.blobUrl);
     map.set(sentence.id, list.filter((r) => r.id !== recordingId));
-    if (map.get(sentence.id)!.length === 0) map.delete(sentence.id);
+    if ((map.get(sentence.id)?.length ?? 0) === 0) map.delete(sentence.id);
     setPlayingRecordingId(null);
+    setIsPlayingBoth(false);
     setRecordingsVersion((v) => v + 1);
   }, [sentence]);
 
@@ -343,22 +347,8 @@ export function ShadowingWorkspace() {
       ),
     };
     updateLesson(updated);
+    useLessonStore.getState().saveLessonToDB().catch(console.error);
     setEditingText(false);
-
-    if (!sentence.zh || !sentence.zh.trim()) {
-      translateText(text).then((zh) => {
-        if (!zh) return;
-        const state = useLessonStore.getState();
-        if (!state.lesson) return;
-        const updated2: LessonData = {
-          ...state.lesson,
-          sentences: state.lesson.sentences.map((s) =>
-            s.id === sentence.id && (!s.zh || !s.zh.trim()) ? { ...s, zh } : s
-          ),
-        };
-        useLessonStore.getState().updateLesson(updated2);
-      });
-    }
   }, [lesson, sentence, editValue, updateLesson]);
 
   const handleSaveZh = useCallback(() => {
@@ -370,6 +360,7 @@ export function ShadowingWorkspace() {
       ),
     };
     updateLesson(updated);
+    useLessonStore.getState().saveLessonToDB().catch(console.error);
     setEditingZh(false);
   }, [lesson, sentence, editZhValue, updateLesson]);
 

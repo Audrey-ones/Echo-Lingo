@@ -19,6 +19,8 @@ interface FooterBarProps {
 export function FooterBar({ mode }: FooterBarProps) {
   const playbackRate = useLessonStore((s) => s.playbackRate);
   const isLooping = useLessonStore((s) => s.isLooping);
+  const loopCount = useLessonStore((s) => s.loopCount);
+  const cycleLoopCount = useLessonStore((s) => s.cycleLoopCount);
   const lesson = useLessonStore((s) => s.lesson);
 
   const handleDownload = () => {
@@ -27,17 +29,24 @@ export function FooterBar({ mode }: FooterBarProps) {
     downloadJson(lesson, `${name}.json`);
   };
 
+  const absCount = Math.abs(loopCount);
+  const loopLabel = loopCount === 0 ? "∞" : absCount + (loopCount < 0 ? "⏸" : "");
+
   return (
     <footer className="h-10 w-full flex items-center justify-center gap-5 text-[11px] text-zinc-500 bg-zinc-950/60 backdrop-blur-2xl border-t border-zinc-800/15 shrink-0">
       <span className="flex items-center gap-1.5">
         <Kbd>Space</Kbd> 播放
       </span>
-      <span className="flex items-center gap-1.5">
+      <button
+        onClick={cycleLoopCount}
+        className="flex items-center gap-1.5 hover:text-zinc-300 transition-colors duration-200"
+        title="点击切换循环次数"
+      >
         <Kbd>/</Kbd> 循环{" "}
         <span className={isLooping ? "text-indigo-400 font-medium" : ""}>
-          {isLooping ? "ON" : "OFF"}
+          {isLooping ? loopLabel : "OFF"}
         </span>
-      </span>
+      </button>
       <span className="flex items-center gap-1.5">
         <Kbd>↑</Kbd><Kbd>↓</Kbd> 切换
       </span>

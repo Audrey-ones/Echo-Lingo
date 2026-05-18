@@ -4,7 +4,6 @@ import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { diffWords } from "diff";
 import { Pencil, Hash, Sparkles } from "lucide-react";
 import { useLessonStore } from "@/stores/lesson-store";
-import { translateText } from "@/lib/translate";
 import { EditableField } from "@/components/shared/editable-field";
 import { cn } from "@/lib/utils";
 import type { DictationRecord, LessonData } from "@/lib/types";
@@ -19,6 +18,7 @@ export function DictationWorkspace() {
   const isSentenceCompleted = useLessonStore((s) => s.isSentenceCompleted);
   const dictationRecords = useLessonStore((s) => s.dictationRecords);
   const addDictationRecord = useLessonStore((s) => s.addDictationRecord);
+  const completeDictationSentence = useLessonStore((s) => s.completeDictationSentence);
   const setCurrentIndex = useLessonStore((s) => s.setCurrentIndex);
 
   const [input, setInput] = useState("");
@@ -55,9 +55,7 @@ export function DictationWorkspace() {
       setFlash(null);
     }
     setEditingText(false);
-    // Auto-focus input after navigating
-    setTimeout(() => inputRef.current?.focus(), 100);
-  }, [sentenceKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sentenceKey, dictationRecords]);
 
   // Auto-scroll pills row to keep current pill visible
   useEffect(() => {
@@ -99,23 +97,9 @@ export function DictationWorkspace() {
       ),
     };
     updateLesson(updated);
+    // Persist reference text edit to DB
+    useLessonStore.getState().saveLessonToDB().catch(console.error);
     setEditingText(false);
-
-    if (!sentence.zh || !sentence.zh.trim()) {
-      translateText(text).then((zh) => {
-        if (!zh) return;
-        const state = useLessonStore.getState();
-        if (!state.lesson) return;
-        if (state.currentSentence()?.id !== sentence.id) return;
-        const updated2: LessonData = {
-          ...state.lesson,
-          sentences: state.lesson.sentences.map((s) =>
-            s.id === sentence.id && (!s.zh || !s.zh.trim()) ? { ...s, zh } : s
-          ),
-        };
-        useLessonStore.getState().updateLesson(updated2);
-      });
-    }
   }, [lesson, sentence, editValue, updateLesson]);
 
   const startEdit = useCallback(() => {
@@ -151,12 +135,19 @@ export function DictationWorkspace() {
     const userClean = clean(input);
     const targetClean = clean(s.en);
 
+    // Always compute diff so user sees the comparison
+    const diffs = diffWords(s.en, input.trim());
+    const diffResult = diffs.map((d) => ({
+      value: d.value,
+      added: d.added,
+      removed: d.removed,
+    }));
+    setResult(diffResult);
+
     if (userClean === targetClean) {
       setFlash("correct");
-      setResult(null);
-      const record: DictationRecord = { userInput: input.trim(), result: "correct" };
-      addDictationRecord(s.id, record);
-      markCompleted(s.id, "dictation");
+      const record: DictationRecord = { userInput: input.trim(), result: "correct", diff: diffResult };
+      completeDictationSentence(s.id, record);
       setTimeout(() => {
         const state = useLessonStore.getState();
         if (state.currentSentence()?.id !== s.id) return;
@@ -166,22 +157,15 @@ export function DictationWorkspace() {
       }, 800);
     } else {
       setFlash("wrong");
-      const diffs = diffWords(s.en, input.trim());
-      const diffResult = diffs.map((d) => ({
-        value: d.value,
-        added: d.added,
-        removed: d.removed,
-      }));
-      setResult(diffResult);
       const record: DictationRecord = { userInput: input.trim(), result: "wrong", diff: diffResult };
       addDictationRecord(s.id, record);
     }
 
     setTimeout(() => setFlash(null), 500);
-  }, [input, addDictationRecord, markCompleted]);
+  }, [input, addDictationRecord, completeDictationSentence]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault();
       handleSubmit();
     }

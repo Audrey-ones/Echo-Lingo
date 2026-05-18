@@ -34,12 +34,16 @@ export function useKeyboard() {
           ws.pause();
         } else {
           const resume = () => {
-            // Resume from current position if within current sentence, else from start
             const state = store.getState();
             const s = state.currentSentence();
             const cur = ws.getCurrentTime();
             if (s && cur >= s.start_time && cur < s.end_time) {
-              ws.play();
+              // Respect loop mode when resuming within current sentence
+              if (state.isLooping) {
+                ws.play(cur, s.end_time);
+              } else {
+                ws.play();
+              }
             } else {
               triggerPlayback();
             }
