@@ -14,6 +14,7 @@ export function FileUploader() {
   const audioBlobUrl = useLessonStore((s) => s.audioBlobUrl);
   const [analyzing, setAnalyzing] = useState(false);
   const [status, setStatus] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const [sentenceCount, setSentenceCount] = useState(0);
   const [urlInput, setUrlInput] = useState("");
   const [showUrlInput, setShowUrlInput] = useState(false);
@@ -27,6 +28,7 @@ export function FileUploader() {
   const handleLoad = useCallback(
     async (source: File | string, sourceName?: string) => {
       setAnalyzing(true);
+      setError(null);
 
       try {
         if (audioBlobUrl) URL.revokeObjectURL(audioBlobUrl);
@@ -61,11 +63,11 @@ export function FileUploader() {
           generatedLessonRef.current = updated;
           useLessonStore.getState().updateLesson(updated);
           setStatus("");
-        });
+        }).catch(console.error);
       } catch (err) {
         console.error("处理失败:", err);
         setStatus("");
-        alert(
+        setError(
           err instanceof Error
             ? `处理失败: ${err.message}`
             : "处理失败，请确认文件或链接有效。"
@@ -102,7 +104,7 @@ export function FileUploader() {
         try {
           const data: LessonData = JSON.parse(ev.target?.result as string);
           if (!data.id || !data.title || !Array.isArray(data.sentences)) {
-            alert("JSON 格式不符，请检查是否为有效的课程文件。");
+            setError("JSON 格式不符，请检查是否为有效的课程文件。");
             return;
           }
           generatedLessonRef.current = data;
@@ -118,9 +120,9 @@ export function FileUploader() {
             }));
             generatedLessonRef.current = updated;
             useLessonStore.getState().updateLesson(updated);
-          });
+          }).catch(console.error);
         } catch {
-          alert("JSON 解析失败，请检查文件格式。");
+          setError("JSON 解析失败，请检查文件格式。");
         }
       };
       reader.readAsText(file);
@@ -156,6 +158,13 @@ export function FileUploader() {
 
       {/* Main upload card */}
       <div className="w-full max-w-sm space-y-3">
+        {/* Error display */}
+        {error && (
+          <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-center">
+            {error}
+          </div>
+        )}
+
         {/* Sensitivity selector */}
         {!analyzing && !ready && (
           <>

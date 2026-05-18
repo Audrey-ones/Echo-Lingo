@@ -321,7 +321,7 @@ export default function Home() {
   useKeyboard();
 
   const handleBack = () => {
-    window.location.reload();
+    useLessonStore.setState({ lesson: null, audioBlobUrl: null, currentIndex: 0, dictationRecords: {} });
   };
 
   const sentence = currentSentence();
@@ -396,7 +396,7 @@ export default function Home() {
                     setEditZhValue(sentence.zh);
                     setEditingTranslation(true);
                   }}
-                  className="ml-2.5 opacity-0 group-hover:opacity-100 transition-all text-zinc-500 hover:text-zinc-200 align-middle"
+                  className="ml-2.5 opacity-60 hover:opacity-100 transition-all text-zinc-500 hover:text-zinc-200 align-middle"
                 >
                   <Pencil className="w-3 h-3 inline" />
                 </button>

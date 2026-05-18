@@ -246,9 +246,17 @@ export async function analyzeAudio(
     }
   }
 
+  // Scan forward past leading silence
+  let currentStart = 0;
+  for (let i = 0; i < totalSamples; i++) {
+    if (Math.abs(data[i]) >= silenceThreshold) {
+      currentStart = i / sampleRate;
+      break;
+    }
+  }
+
   // Split audio into sentences based on silent regions
   const sentences: LessonData["sentences"] = [];
-  let currentStart = 0;
   let sentenceIndex = 1;
 
   for (const silence of silentRegions) {
@@ -365,8 +373,21 @@ export async function analyzeAudioFine(
     });
   }
 
-  const sentences: LessonData["sentences"] = [];
+  // Scan forward past leading silence
   let currentStart = 0;
+  for (let w = 0; w < windowCount; w++) {
+    let sumSq = 0;
+    const offset = w * WINDOW_SIZE;
+    for (let j = 0; j < WINDOW_SIZE; j++) {
+      sumSq += data[offset + j] * data[offset + j];
+    }
+    if (Math.sqrt(sumSq / WINDOW_SIZE) >= silenceThreshold) {
+      currentStart = (w * WINDOW_SIZE) / sampleRate;
+      break;
+    }
+  }
+
+  const sentences: LessonData["sentences"] = [];
   let sentenceIndex = 1;
 
   for (const silence of silentRegions) {

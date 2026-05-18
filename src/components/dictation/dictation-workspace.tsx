@@ -263,7 +263,7 @@ export function DictationWorkspace() {
           </p>
           <button
             onClick={startEdit}
-            className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-zinc-800/90 border border-zinc-700/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 text-zinc-400 hover:text-zinc-100 hover:border-zinc-600 hover:bg-zinc-700"
+            className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-zinc-800/90 border border-zinc-700/50 flex items-center justify-center opacity-60 hover:opacity-100 transition-all duration-200 text-zinc-400 hover:text-zinc-100 hover:border-zinc-600 hover:bg-zinc-700"
           >
             <Pencil className="w-3 h-3" />
           </button>
