@@ -52,9 +52,7 @@ async function extractFromVideo(blobUrl: string): Promise<AudioBuffer> {
     const done = (buf: AudioBuffer | null, err?: Error) => {
       if (settled) return;
       settled = true;
-      try {
-        recorder.stop();
-      } catch {}
+      try { recorder.stop(); } catch {}
       video.pause();
       source.disconnect();
       gain.disconnect();
@@ -64,56 +62,59 @@ async function extractFromVideo(blobUrl: string): Promise<AudioBuffer> {
       else reject(err);
     };
 
-    const timeout = Math.max(duration * 1000 + 30000, 60000);
-    const timer = setTimeout(
-      () => done(null, new Error("音频提取超时")),
-      timeout
-    );
+    try {
+      const timeout = Math.max(duration * 1000 + 30000, 60000);
+      const timer = setTimeout(
+        () => done(null, new Error("音频提取超时")),
+        timeout
+      );
 
-    recorder.ondataavailable = (e) => {
-      if (e.data.size > 0) chunks.push(e.data);
-    };
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
 
-    recorder.onstop = async () => {
-      clearTimeout(timer);
-      let decodeCtx: AudioContext | null = null;
-      try {
-        const blob = new Blob(chunks, { type: "audio/webm" });
-        const arrayBuf = await blob.arrayBuffer();
-        decodeCtx = new AudioContext();
-        const audioBuffer = await decodeCtx.decodeAudioData(arrayBuf);
-        await decodeCtx.close();
-        decodeCtx = null;
-        done(audioBuffer);
-      } catch (err) {
-        if (decodeCtx) {
-          decodeCtx.close().catch(() => {});
+      recorder.onstop = async () => {
+        clearTimeout(timer);
+        let decodeCtx: AudioContext | null = null;
+        try {
+          const blob = new Blob(chunks, { type: "audio/webm" });
+          const arrayBuf = await blob.arrayBuffer();
+          decodeCtx = new AudioContext();
+          const audioBuffer = await decodeCtx.decodeAudioData(arrayBuf);
+          await decodeCtx.close();
+          decodeCtx = null;
+          done(audioBuffer);
+        } catch (err) {
+          if (decodeCtx) {
+            decodeCtx.close().catch(() => {});
+          }
+          done(null, err as Error);
         }
-        done(null, err as Error);
-      }
-    };
+      };
 
-    recorder.onerror = () => done(null, new Error("录音失败"));
+      recorder.onerror = () => done(null, new Error("录音失败"));
 
-    recorder.start();
+      recorder.start();
 
-    video.playbackRate = 1;
-    video.play().catch((e) => done(null, e));
+      video.playbackRate = 1;
+      video.play().catch((e) => done(null, e));
 
-    video.addEventListener(
-      "ended",
-      () => {
-        // Video ended, stop recorder (onstop will handle the rest)
-        if (recorder.state !== "inactive") recorder.stop();
-      },
-      { once: true }
-    );
+      video.addEventListener(
+        "ended",
+        () => {
+          if (recorder.state !== "inactive") recorder.stop();
+        },
+        { once: true }
+      );
 
-    video.addEventListener(
-      "error",
-      () => done(null, new Error("视频播放失败")),
-      { once: true }
-    );
+      video.addEventListener(
+        "error",
+        () => done(null, new Error("视频播放失败")),
+        { once: true }
+      );
+    } catch (e) {
+      done(null, e as Error);
+    }
   });
 }
 

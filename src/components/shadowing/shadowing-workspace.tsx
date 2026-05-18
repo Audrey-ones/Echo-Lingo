@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import WaveSurfer from "wavesurfer.js";
 import { Pencil, Volume2, Mic, Square, Play, Hash, Sparkles, Trash2 } from "lucide-react";
 import { useLessonStore } from "@/stores/lesson-store";
@@ -302,14 +302,27 @@ export function ShadowingWorkspace() {
     const original = (window as any).__echoWavesurfer as WaveSurfer | undefined;
     if (!original) return;
 
-    const onPause = () => setIsPlayingBoth(false);
-    original.on("pause", onPause);
-    original.on("finish", onPause);
+    const onStop = () => setIsPlayingBoth(false);
+    original.on("pause", onStop);
+    original.on("finish", onStop);
+
+    const recordingWs = playingRecordingId
+      ? waveSurfersRef.current.get(playingRecordingId)
+      : undefined;
+    if (recordingWs) {
+      recordingWs.on("finish", onStop);
+      recordingWs.on("pause", onStop);
+    }
+
     return () => {
-      original.un("pause", onPause);
-      original.un("finish", onPause);
+      original.un("pause", onStop);
+      original.un("finish", onStop);
+      if (recordingWs) {
+        recordingWs.un("finish", onStop);
+        recordingWs.un("pause", onStop);
+      }
     };
-  }, [isPlayingBoth]);
+  }, [isPlayingBoth, playingRecordingId]);
 
   const handleMarkCompleted = useCallback(() => {
     if (!sentence) return;
@@ -380,12 +393,14 @@ export function ShadowingWorkspace() {
   if (!sentence) return null;
 
   // Build sentence pill data
-  const sentencePills = (lesson?.sentences ?? []).map((s, i) => ({
-    id: s.id,
-    index: i,
-    done: isSentenceCompleted(s.id, "shadowing"),
-    isCurrent: s.id === sentence.id,
-  }));
+  const sentencePills = useMemo(() =>
+    (lesson?.sentences ?? []).map((s, i) => ({
+      id: s.id,
+      index: i,
+      done: isSentenceCompleted(s.id, "shadowing"),
+      isCurrent: s.id === sentence.id,
+    }))
+  , [lesson, sentence]);
 
   return (
     <div className="flex flex-col items-center gap-3 w-full max-w-2xl">

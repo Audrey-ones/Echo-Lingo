@@ -47,6 +47,7 @@ export function TopBar({ mode, onModeChange, onBack, completed, total }: TopBarP
       <div className="flex items-center gap-3 min-w-0">
         <button
           onClick={onBack}
+          aria-label="返回上传页面"
           className="p-1.5 rounded-lg hover:bg-zinc-800/40 transition-colors duration-200 text-zinc-400 hover:text-zinc-200 shrink-0"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -59,7 +60,14 @@ export function TopBar({ mode, onModeChange, onBack, completed, total }: TopBarP
       <div className="flex items-center gap-4">
         {/* Progress */}
         <div className="flex items-center gap-2.5">
-          <div className="w-28 h-1.5 bg-zinc-800/40 rounded-full overflow-hidden shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]">
+          <div
+            className="w-28 h-1.5 bg-zinc-800/40 rounded-full overflow-hidden shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]"
+            role="progressbar"
+            aria-valuenow={pct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`进度 ${completed}/${total}`}
+          >
             <div
               className="h-full rounded-full transition-all duration-700 ease-out"
               style={{
@@ -87,9 +95,11 @@ export function TopBar({ mode, onModeChange, onBack, completed, total }: TopBarP
         </button>
 
         {/* Mode toggle */}
-        <div className="flex items-center bg-zinc-800/30 rounded-xl p-0.5 gap-0.5 ring-1 ring-zinc-700/20">
+        <div className="flex items-center bg-zinc-800/30 rounded-xl p-0.5 gap-0.5 ring-1 ring-zinc-700/20" role="tablist" aria-label="练习模式">
           <button
             onClick={() => onModeChange("dictation")}
+            role="tab"
+            aria-selected={mode === "dictation"}
             className={`px-3.5 py-1.5 text-xs rounded-lg transition-all duration-300 font-medium tracking-tight ${
               mode === "dictation"
                 ? "bg-zinc-700/70 text-zinc-100 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.25),0_0_0_1px_rgba(255,255,255,0.03)]"
@@ -100,6 +110,8 @@ export function TopBar({ mode, onModeChange, onBack, completed, total }: TopBarP
           </button>
           <button
             onClick={() => onModeChange("shadowing")}
+            role="tab"
+            aria-selected={mode === "shadowing"}
             className={`px-3.5 py-1.5 text-xs rounded-lg transition-all duration-300 font-medium tracking-tight ${
               mode === "shadowing"
                 ? "bg-zinc-700/70 text-zinc-100 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.25)]"

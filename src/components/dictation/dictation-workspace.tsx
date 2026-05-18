@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { diffWords } from "diff";
 import { Pencil, Hash, Sparkles } from "lucide-react";
 import { useLessonStore } from "@/stores/lesson-store";
@@ -100,6 +100,7 @@ export function DictationWorkspace() {
         if (!zh) return;
         const state = useLessonStore.getState();
         if (!state.lesson) return;
+        if (state.currentSentence()?.id !== sentence.id) return;
         const updated2: LessonData = {
           ...state.lesson,
           sentences: state.lesson.sentences.map((s) =>
@@ -181,12 +182,14 @@ export function DictationWorkspace() {
   };
 
   // Build sentence pill data
-  const sentencePills = (lesson?.sentences ?? []).map((s, i) => {
-    const record = dictationRecords[s.id];
-    const done = isSentenceCompleted(s.id, "dictation");
-    const isCurrent = s.id === sentence?.id;
-    return { id: s.id, index: i, record, done, isCurrent };
-  });
+  const sentencePills = useMemo(() =>
+    (lesson?.sentences ?? []).map((s, i) => {
+      const record = dictationRecords[s.id];
+      const done = isSentenceCompleted(s.id, "dictation");
+      const isCurrent = s.id === sentence?.id;
+      return { id: s.id, index: i, record, done, isCurrent };
+    })
+  , [lesson, dictationRecords, sentence]);
 
   if (!sentence) return null;
 
