@@ -32,7 +32,7 @@ export function EditableField({
           if (e.key === "Escape") onCancel();
         }}
         placeholder={placeholder}
-        className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm font-mono text-zinc-200 outline-none focus:border-indigo-500/70 transition-colors"
+        className="flex-1 bg-transparent border-b-2 border-zinc-700 px-1 py-2 text-sm font-mono text-zinc-200 outline-none focus:border-indigo-500/70 transition-colors"
         autoFocus={autoFocus}
       />
       <button

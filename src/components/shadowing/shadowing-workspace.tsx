@@ -408,7 +408,11 @@ export function ShadowingWorkspace() {
       <div className="flex items-center gap-3">
         <span className="inline-flex items-center gap-1 text-xs text-zinc-400 font-mono bg-zinc-900/50 backdrop-blur-sm px-2.5 py-1 rounded-full border border-zinc-800/40 shadow-[0_1px_3px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.02)]">
           <Hash className="w-3 h-3" />
-          {sentence.id}
+          {(() => {
+            const idx = lesson?.sentences.findIndex((s) => s.id === sentence.id) ?? -1;
+            const total = lesson?.sentences.length ?? 0;
+            return idx >= 0 ? `第 ${idx + 1}/${total} 句` : sentence.id;
+          })()}
         </span>
         {isCompleted && (
           <button
@@ -429,7 +433,7 @@ export function ShadowingWorkspace() {
             ref={pillsRef}
             className="w-full overflow-x-auto pb-1 scrollbar-hide"
           >
-            <div className="flex items-center gap-1.5 justify-center min-w-min">
+            <div className="flex items-center gap-1.5 justify-center min-w-min animate-fade-in">
               {sentencePills.map((pill) => (
                 <button
                   key={pill.id}
@@ -546,6 +550,7 @@ export function ShadowingWorkspace() {
               <button
                 onClick={startRecording}
                 disabled={isPlayingBoth}
+                title={isPlayingBoth ? "正在播放合成音，请等待播放结束" : undefined}
                 className="group flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-900/60 border border-zinc-800/40 hover:border-zinc-700/50 text-zinc-400 hover:text-zinc-200 transition-all duration-300 text-sm disabled:opacity-30 hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.1)]"
               >
                 <span className="relative flex h-2.5 w-2.5">
@@ -581,7 +586,7 @@ export function ShadowingWorkspace() {
               {currentRecordings.map((rec, i) => (
                 <div
                   key={rec.id}
-                  className="rounded-xl border border-zinc-800/40 bg-zinc-900/30 backdrop-blur-sm overflow-hidden px-2 py-1 hover:border-zinc-700/50 transition-all duration-300 shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
+                  className="rounded-xl border border-zinc-800/40 bg-zinc-900/30 backdrop-blur-sm overflow-hidden px-2 py-1 hover:border-zinc-700/50 transition-all duration-300 shadow-[0_2px_8px_rgba(0,0,0,0.08)] animate-fade-in"
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] text-zinc-500 font-mono shrink-0 w-8 text-right tabular-nums">
@@ -637,7 +642,10 @@ export function ShadowingWorkspace() {
       )}
 
       {isCompleted && (
-        <p className="text-xs text-green-500/50">跟读完成</p>
+        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/25 text-green-400 animate-fade-in-scale">
+          <Sparkles className="w-3.5 h-3.5" />
+          <span className="text-xs font-medium">跟读完成</span>
+        </div>
       )}
 
     </div>

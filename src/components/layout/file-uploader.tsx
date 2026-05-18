@@ -312,22 +312,23 @@ export function FileUploader() {
               </button>
             </div>
             <p className="text-[11px] text-zinc-500 leading-relaxed px-1">
-              仅支持以 .mp3/.mp4 等结尾的音视频直链。B 站/YouTube/抖音等平台请用{" "}
-              <code className="text-zinc-400 bg-zinc-800/60 px-1.5 py-0.5 rounded-md text-[10px]">
-                yt-dlp
-              </code>{" "}
-              下载后上传。
+              支持 .mp3/.mp4/.wav 等音视频直链。平台视频（B站/YouTube等）请先下载再上传。
             </p>
           </div>
         )}
 
         {/* Analyzing status */}
         {analyzing && status && (
-          <div className="flex items-center justify-center gap-2 py-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse shadow-[0_0_6px_rgba(99,102,241,0.4)]" />
-            <p className="text-xs text-indigo-400/80">
-              {status}
-            </p>
+          <div className="space-y-2 py-1">
+            <div className="w-full h-0.5 bg-zinc-800/40 rounded-full overflow-hidden">
+              <div className="h-full bg-indigo-500/50 rounded-full animate-[shimmer_1.5s_ease-in-out_infinite]" style={{ width: "60%", background: "linear-gradient(90deg, transparent, #6366f1, transparent)", backgroundSize: "200% 100%" }} />
+            </div>
+            <div className="flex items-center justify-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse shadow-[0_0_6px_rgba(99,102,241,0.4)]" />
+              <p className="text-xs text-indigo-400/80">
+                {status}
+              </p>
+            </div>
           </div>
         )}
 

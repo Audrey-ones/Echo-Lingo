@@ -34,6 +34,10 @@ export function DictationWorkspace() {
 
   const sentence = currentSentence();
   const sentenceKey = sentence?.id;
+  const sentenceIndex = lesson && sentence
+    ? lesson.sentences.findIndex((s) => s.id === sentence.id)
+    : -1;
+  const sentenceTotal = lesson?.sentences.length ?? 0;
   const isCompleted = sentence ? isSentenceCompleted(sentence.id, "dictation") : false;
   const hasReference = !!sentence?.en;
 
@@ -51,6 +55,8 @@ export function DictationWorkspace() {
       setFlash(null);
     }
     setEditingText(false);
+    // Auto-focus input after navigating
+    setTimeout(() => inputRef.current?.focus(), 100);
   }, [sentenceKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-scroll pills row to keep current pill visible
@@ -199,7 +205,7 @@ export function DictationWorkspace() {
       <div className="flex items-center gap-3">
         <span className="inline-flex items-center gap-1 text-xs text-zinc-400 font-mono bg-zinc-900/50 backdrop-blur-sm px-2.5 py-1 rounded-full border border-zinc-800/40 shadow-[0_1px_3px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.02)]">
           <Hash className="w-3 h-3" />
-          {sentence.id}
+          {sentenceIndex >= 0 ? `第 ${sentenceIndex + 1}/${sentenceTotal} 句` : sentence.id}
         </span>
         {isCompleted && (
           <button
@@ -225,7 +231,7 @@ export function DictationWorkspace() {
             ref={pillsRef}
             className="w-full overflow-x-auto pb-1 scrollbar-hide"
           >
-            <div className="flex items-center gap-1.5 justify-center min-w-min">
+            <div className="flex items-center gap-1.5 justify-center min-w-min animate-fade-in">
               {sentencePills.map((pill) => (
                 <button
                   key={pill.id}
@@ -286,12 +292,15 @@ export function DictationWorkspace() {
 
       {/* No reference text prompt */}
       {!hasReference && !editingText && (
-        <button
-          onClick={startEdit}
-          className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors underline underline-offset-4 decoration-indigo-500/30"
-        >
-          设置本句英文原文（用于纠错对比）
-        </button>
+        <div className="flex flex-col items-center gap-2 px-6 py-6 rounded-2xl bg-zinc-900/20 border border-dashed border-zinc-700/30 text-center">
+          <p className="text-sm text-zinc-500">还未设置这句的参考原文</p>
+          <button
+            onClick={startEdit}
+            className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors underline underline-offset-4 decoration-indigo-500/30"
+          >
+            点击此处设置英文原文
+          </button>
+        </div>
       )}
 
       {/* Dictation input */}
@@ -322,7 +331,7 @@ export function DictationWorkspace() {
           <div className="text-[10px] text-zinc-500 uppercase tracking-[0.15em] mb-2 text-center font-medium">
             对比结果
           </div>
-          <div className="flex flex-wrap justify-center gap-x-1 font-mono text-base leading-relaxed">
+          <div className="flex flex-wrap justify-center gap-x-1.5 font-mono text-base leading-relaxed">
             {result.map((part, i) => {
               if (part.removed) {
                 return (
@@ -333,7 +342,7 @@ export function DictationWorkspace() {
               }
               if (part.added) {
                 return (
-                  <span key={i} className="text-green-400/80 underline decoration-green-500/30">
+                  <span key={i} className="text-green-400/80 bg-green-500/10 rounded px-0.5">
                     {part.value}
                   </span>
                 );

@@ -76,6 +76,7 @@ export function TopBar({ mode, onModeChange, onBack, completed, total }: TopBarP
                   ? "linear-gradient(90deg, #6366f1, #818cf8, #6366f1)"
                   : "transparent",
                 backgroundSize: pct > 0 ? "200% 100%" : undefined,
+                animation: pct > 0 ? "progress-shimmer 2.5s linear infinite" : undefined,
                 boxShadow: pct > 0 ? "0 0 10px rgba(99,102,241,0.35), 0 0 2px rgba(99,102,241,0.5)" : undefined,
               }}
             />

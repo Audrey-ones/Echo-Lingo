@@ -371,12 +371,13 @@ export default function Home() {
                   点击开始播放
                 </span>
               </div>
+              <p className="text-zinc-400/60 text-xs mt-3">或按 <kbd className="px-1.5 py-0.5 text-[10px] rounded bg-white/10 border border-white/10 font-mono">Space</kbd> 键</p>
             </button>
           )}
 
           {/* Translation overlay */}
           {showTranslation && sentence && !editingTranslation && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-zinc-900/90 backdrop-blur-xl border border-zinc-800/40 rounded-xl px-5 py-3 text-sm text-zinc-300 max-w-lg text-center z-10 group shadow-[0_8px_32px_-8px_rgba(0,0,0,0.35)]">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-zinc-900/90 backdrop-blur-xl border border-zinc-800/40 rounded-xl px-5 py-3 text-sm text-zinc-300 max-w-lg text-center z-10 group shadow-[0_8px_32px_-8px_rgba(0,0,0,0.35)] animate-fade-in">
               {sentence.zh ? (
                 <span className="leading-relaxed">{sentence.zh}</span>
               ) : (
@@ -406,7 +407,7 @@ export default function Home() {
 
           {/* Translation edit */}
           {showTranslation && editingTranslation && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700/50 rounded-xl px-3 py-2.5 text-sm z-10 flex items-center gap-2 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.35)]">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700/50 rounded-xl px-3 py-2.5 text-sm z-10 flex items-center gap-2 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.35)] animate-fade-in">
               <input
                 value={editZhValue}
                 onChange={(e) => setEditZhValue(e.target.value)}
@@ -444,9 +445,9 @@ export default function Home() {
         {!isReady ? (
           <FileUploader />
         ) : mode === "dictation" ? (
-          <DictationWorkspace />
+          <DictationWorkspace key="dictation" />
         ) : (
-          <ShadowingWorkspace />
+          <ShadowingWorkspace key="shadowing" />
         )}
       </div>
 

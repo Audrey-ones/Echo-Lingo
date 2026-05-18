@@ -69,6 +69,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-family: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  transition: background-color 0.35s ease, border-color 0.35s ease, color 0.35s ease;
 }
 
 /* Subtle grain texture overlay (dark mode only) */
@@ -160,4 +161,9 @@ body {
 }
 .animate-slide-up {
   animation: slide-up 0.3s ease-out both;
+}
+
+@keyframes progress-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
